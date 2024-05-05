@@ -1,47 +1,51 @@
-import iziToast from 'izitoast';
-import 'izitoast/dist/css/iziToast.min.css';
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
+const notificationForm = document.querySelector('.form');
+const delayInput = document.querySelector('input[name="delay"]');
+const fulfilledRadio = document.querySelector('input[value="fulfilled"]');
 
-const addFont = document.head.insertAdjacentHTML(
-  'beforeend',
-  '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"></link>'
-);
+const toastSettings = {
+  position: 'topRight',
+  messageColor: '#ffffff',
+  timeout: 5000,
+  close: false,
+};
 
-const form = document.querySelector('.form');
-const inputDelay = document.querySelector('input[name="delay"]');
-const submitBtn = document.querySelector('button[type="submit"]');
+const PROMISE_MESSAGES = {
+  fulfilled: '✅ Fulfilled promise',
+  rejected: '❌ Rejected promise',
+};
 
-form.addEventListener('submit', event => {
-  event.preventDefault();
+const delayNotification = (delay, promiseType) =>
+  new Promise((resolve, reject) =>
+    setTimeout(() => promiseType === 'fulfilled' ? resolve(delay) : reject(delay), delay)
+  );
 
-  const delay = parseInt(inputDelay.value);
-  const state = document.querySelector('input[name="state"]:checked').value;
-
-  const promise = new Promise((resolve, reject) => {
-    if (state === 'fulfilled') {
-      setTimeout(() => {
-        resolve(delay);
-      }, delay);
-    } else {
-      setTimeout(() => {
-        reject(delay);
-      }, delay);
-    }
-  });
-  promise
+const handleNotification = (delay, promiseType) =>
+  delayNotification(delay, promiseType)
     .then(delay => {
-      iziToast.success({
-        title: 'OK',
-        message: `Fulfilled promise in ${delay}ms`,
-        position: 'topRight',
+      iziToast.show({
+        ...toastSettings,
+        message: `${PROMISE_MESSAGES[promiseType]} in ${delay}ms`,
+        backgroundColor: promiseType === 'fulfilled' ? 'green' : '#FF7777',
       });
     })
     .catch(delay => {
-      iziToast.error({
-        title: 'Error',
-        message: `Rejected promise in ${delay}ms`,
-        topRight: topRight,
+      iziToast.show({
+        ...toastSettings,
+        message: `${PROMISE_MESSAGES[promiseType]} in ${delay}ms`,
+        backgroundColor: '#FF7777',
       });
     });
-  form.reset();
-});
+
+const handleFormSubmit = event => {
+  event.preventDefault();
+
+  const promiseType = fulfilledRadio.checked ? 'fulfilled' : 'rejected';
+  handleNotification(Number(delayInput.value), promiseType);
+
+  event.target.reset();
+};
+
+notificationForm.addEventListener('submit', handleFormSubmit);
